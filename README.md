@@ -3,3 +3,7 @@
 
 If `snv` is installed to your home directory, and that directory is in your path, it works both on host and in a container.
 
+Dependencies:
+- distrobox
+- fzf
+
