@@ -7,7 +7,7 @@ if [[ -f /run/.containerenv && -r /run/.containerenv ]]; then
   kill -9 $PPID
 fi
 
-host="host"  #"$(cat /etc/hostname)"
+host="$(cat /etc/hostname) (host)"
 envs="$host\n$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
 
 # Loop if snv is run from the contaien
