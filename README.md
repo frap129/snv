@@ -3,6 +3,8 @@
 
 If `snv` is installed somewhere in your home directory and is in your path, it works both on host and in a container.
 
+![](docs/demo.gif)
+
 ### Preview
 The command used to generate the preview is customizable using environment variables.
 | Variable  | Default Value                                                  |
