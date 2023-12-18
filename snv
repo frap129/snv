@@ -9,17 +9,20 @@ fi
 
 host="$(cat /etc/hostname) (host)"
 envs="$host\n$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
+fetch=${SNV_FETCH:="cat /etc/hostname"}
+preview="[[ {} == '$host' ]] && $fetch || (distrobox list | head -n 1 && distrobox list | grep ' {}')"
 
-# Loop if snv is run from the contaien
+# Loop if snv is run from the container
 ret="1"
 while [[ "$ret" != "0" ]]; do
-  choice="$(printf "$envs" | fzf --height 40% --reverse)"
+  choice="$(printf "$envs" | fzf --height 10% --reverse --preview "$preview")"
+
   case $choice in
     "$host")
-      exit 0
+      break
       ;;
     "")
-      exit 0
+      break
       ;;
     *)
       distrobox enter $choice 
