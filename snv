@@ -9,8 +9,9 @@ fi
 
 host="$(cat /etc/hostname) (host)"
 envs="$host\n$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
-fetch=${SNV_FETCH:="cat /etc/hostname"}
-preview="[[ {} == '$host' ]] && $fetch || (distrobox list | head -n 1 && distrobox list | grep ' {}')"
+host_prev=${HOST_PREV:="cat /etc/hostname"}
+env_prev=${ENV_PREV:="distrobox list | head -n 1 && distrobox list | grep ' {}'"}
+preview="[[ {} == '$host' ]] && ($host_prev) || ($env_prev)"
 
 # Loop if snv is run from the container
 ret="1"
