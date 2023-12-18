@@ -5,14 +5,14 @@ If `snv` is installed somewhere in your home directory and is in your path, it w
 
 ### Preview
 The command used to generate the preview is customizable using environment variables.
-| Variable     | Default Value                                                  |
-|--------------|----------------------------------------------------------------|
-| HOST_PREVIEW | `cat /etc/hostname`                                            |
-| ENV_PREVIEW  | `distrobox list \| head -n 1 && distrobox list \| grep ' {}'"` |
+| Variable  | Default Value                                                  |
+|-----------|----------------------------------------------------------------|
+| HOST_PREV | `cat /etc/hostname`                                            |
+| ENV_PREV  | `distrobox list \| head -n 1 && distrobox list \| grep ' {}'"` |
 
 As an example, to generate a simple preview for the host with neofetch, export
 
-`HOST_PREVIEW="neofetch --backend off --color_blocks off"`
+`HOST_PREV="neofetch --backend off --color_blocks off"`
 
 Dependencies:
 - distrobox
