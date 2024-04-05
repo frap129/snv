@@ -1,9 +1,13 @@
 #!/usr/bin/env sh
 
-set xou -pipefail 
+set -o pipefail
+tmpfile=/tmp/.snv
 
 # Exit and return to menu on host
 if [[ -f /run/.containerenv && -r /run/.containerenv ]]; then
+  if [[ -n "$1" ]]; then
+    distrobox-host-exec bash -c "echo $1 > $tmpfile"
+  fi
   kill -9 $PPID
 fi
 
@@ -12,22 +16,31 @@ envs="$host\n$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d 
 host_prev=${HOST_PREV:="cat /etc/hostname"}
 env_prev=${ENV_PREV:="distrobox list | head -n 1 && distrobox list | grep ' {}'"}
 preview="[[ {} == '$host' ]] && ($host_prev) || ($env_prev)"
+arg_choice=$1
 
 # Loop if snv is run from the container
 ret="1"
 while [[ "$ret" != "0" ]]; do
-  choice="$(printf "$envs" | fzf --height 10% --reverse --preview "$preview")"
+  if [[ -n "$arg_choice" ]]; then
+    choice=$arg_choice
+    unset arg_choice
+  elif [[ -e $tmpfile ]]; then
+    choice=$(cat $tmpfile)
+    rm $tmpfile
+  else
+    choice="$(printf "$envs" | fzf --height 10% --reverse --preview "$preview")"
+  fi
 
   case $choice in
-    "$host")
-      break
-      ;;
-    "")
-      break
-      ;;
-    *)
-      distrobox enter $choice 
-      ret="$?"
-      ;;
+  "$host")
+    break
+    ;;
+  "")
+    break
+    ;;
+  *)
+    distrobox enter $choice
+    ret="$?"
+    ;;
   esac
 done
