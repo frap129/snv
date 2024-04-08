@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 
-set -o pipefail
 tmpfile=/tmp/.snv
 
 # Exit and return to menu on host
