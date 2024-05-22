@@ -1,46 +1,86 @@
 #!/usr/bin/env bash
+host=${HOSTNAME:="$(cat /etc/hostname)"}
 
-set -o pipefail
-tmpfile=/tmp/.snv
-
-# Exit and return to menu on host
-if [[ -f /run/.containerenv && -r /run/.containerenv ]]; then
-  if [[ -n "$1" ]]; then
-    distrobox-host-exec bash -c "echo $1 > $tmpfile"
-  fi
-  kill -9 $PPID
-fi
-
-host="$(cat /etc/hostname) (host)"
-envs="$host\n$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
-host_prev=${HOST_PREV:="cat /etc/hostname"}
-env_prev=${ENV_PREV:="distrobox list | head -n 1 && distrobox list | grep ' {}'"}
-preview="[[ {} == '$host' ]] && ($host_prev) || ($env_prev)"
-arg_choice=$1
-
-# Loop if snv is run from the container
-ret="1"
-while [[ "$ret" != "0" ]]; do
-  if [[ -n "$arg_choice" ]]; then
-    choice=$arg_choice
-    unset arg_choice
-  elif [[ -e $tmpfile ]]; then
-    choice=$(cat $tmpfile)
-    rm $tmpfile
+_snv_get_envs() {
+  local envs
+  if [[ -f /run/.containerenv && -r /run/.containerenv ]]; then
+    envs="$(distrobox-host-exec distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
   else
-    choice="$(printf "$envs" | fzf --height 10% --reverse --preview "$preview")"
+    envs="$(distrobox list | tail -n +2 | tr '|' ',' | cut -d , -f 2 | tr -d ' ')"
+  fi
+  echo "$envs"
+}
+
+_snv() {
+  set -o pipefail
+  local tmpfile=/tmp/.snv
+
+  # Exit and return to menu on host
+  if [[ -f /run/.containerenv && -r /run/.containerenv ]]; then
+    if [[ -n "$1" ]]; then
+      distrobox-host-exec bash -c "echo $1 > $tmpfile"
+    fi
+    kill -9 $PPID
   fi
 
-  case $choice in
-  "$host")
-    break
-    ;;
-  "")
-    break
-    ;;
-  *)
-    distrobox enter $choice
-    ret="$?"
-    ;;
-  esac
-done
+  local envs="$host\n$(_snv_get_envs)"
+  local host_prev=${HOST_PREV:="cat /etc/hostname"}
+  local env_prev=${ENV_PREV:="distrobox list | head -n 1 && distrobox list | grep ' {}'"}
+  local preview="[[ {} == '$host' ]] && ($host_prev) || ($env_prev)"
+  local arg_choice=$1
+
+  # Loop if snv is run from the container
+  local ret="1"
+  while [[ "$ret" != "0" ]]; do
+    local choice
+    if [[ -n "$arg_choice" ]]; then
+      choice=$arg_choice
+      unset arg_choice
+    elif [[ -e $tmpfile ]]; then
+      choice=$(cat $tmpfile)
+      rm $tmpfile
+    else
+      choice="$(printf "$envs" | fzf --height 10% --reverse --preview "$preview")"
+    fi
+
+    case $choice in
+    "$host" | "")
+      break
+      ;;
+    *)
+      distrobox enter $choice
+      ret="$?"
+      ;;
+    esac
+  done
+}
+
+# Bash completion function
+_snv_completions_bash() {
+  local cur="${COMP_WORDS[COMP_CWORD]}"
+  local choices="$host $(_snv_get_envs)"
+  COMPREPLY=($(compgen -W "$choices" -- "$cur"))
+}
+
+# Zsh completion function
+_snv_completions_zsh() {
+  local choices=($host $(_snv_get_envs))
+  _describe 'environment' choices
+}
+
+# Register completions
+_snv_register_completions() {
+  # Register the completion functions
+  if [[ -n "${BASH_VERSION-}" ]]; then
+    complete -F _snv_completions_bash snv
+  elif [[ -n "${ZSH_VERSION-}" ]]; then
+    compdef _snv_completions_zsh snv
+  fi
+}
+
+# Check if the script is being sourced or executed
+if [[ "${BASH_SOURCE[0]}" != "${0}" ]] || [[ -n "${ZSH_EVAL_CONTEXT-}" && "$ZSH_EVAL_CONTEXT" == *":file" ]]; then
+  _snv_register_completions
+else
+  _snv "$@"
+fi

@@ -20,3 +20,5 @@ Dependencies:
 - distrobox
 - fzf
 
+### Setup completions
+Completions for BASH and ZSH are included in `snv`. Simply `source ~/.local/bin/snv` (or whatever path you installed it to) in your `~/.bashrc` or `~/.zshrc` respevtively
